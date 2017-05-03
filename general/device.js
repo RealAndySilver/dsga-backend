@@ -806,7 +806,7 @@ dbModule.getActiveDevicesList('ASC', 10000, function(device_err,device_res){
 											
 											console.log('Finished device',device.device_tag);
 										});
-									//});
+									});
 									
 										
 																
@@ -814,6 +814,7 @@ dbModule.getActiveDevicesList('ASC', 10000, function(device_err,device_res){
 									//console.log('Total',i,'In:',((end-start)/1000)+'s');
 									
 								}
+							
 							});
 						}
 				}
