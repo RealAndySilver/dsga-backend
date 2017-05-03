@@ -784,7 +784,6 @@ dbModule.getActiveDevicesList('ASC', 10000, function(device_err,device_res){
 									for(var i = 0; i < device.data.settings["Points X Req"];i++){
 										obj.bigdata.push({txt:device.device_tag,val:Math.random(),date: Date.now()});
 									}
-									fs.appendFileSync('../size.txt', JSON.stringify(obj.bigdata));
 									end = +new Date();
 									//console.log('Data array created in Data length',obj.bigdata.length, 'In:',((end-start)/1000)+'s');
 									request({	
