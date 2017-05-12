@@ -17,16 +17,17 @@ var list = function(){
 			"Type 4" : ['Vibration 1','Peakvue 1','Vibration 2','Peakvue 2','Bear Temp 1','Bear Temp 2'],
 			"Type 5" : ['Hot Side Flow','Hot Side Inlet Temp','Hot Side Outlet Temp','Hot Side Pressure','Cold Side Fow','Cold Side Inlet Temp','Cold Side Outlet Temp','Cold Side Pressure'],
 		},
-		update_rate_options : [1,2,3,4,5,6,7,8,9,10,30,60,120,300],
+		update_rate_options : [1,2,3,4,5,6,7,8,9,10,30,60,120,300,600,900,1200,1500,1800],
 		settings : {
 			"Points X Req" : 1,
 			"endpoint" : 'http://ENDPOINT_URL_AND_PORT_HERE/'
-/*
-			A3 : 3,
-			B1 : 11,
-			B2 : 22,
-			B3 : 33
-*/
+		},
+		type : {
+			PV : ['Random Positive Integer','Random Negative Integer','32Bit Int','64Bit Int','Base64 String'],
+			AP : ['Small','Medium','Large','Extra-large'],
+			IR : ['Small','Medium','Large','Extra-large'],
+			SD : ['Random Positive Integer','Random Negative Integer','32Bit Int','64Bit Int','Base64 String'],
+			ED : ['Random Positive Integer','Random Negative Integer','32Bit Int','64Bit Int','Base64 String']
 		},
 		units : {
 			"Type 1" : [

@@ -782,10 +782,10 @@ dbModule.getActiveDevicesList('ASC', 10000, function(device_err,device_res){
 								if(now - device.log.last_sent >= device.update_rate * 1000 || !device.log.last_sent){
 									//console.log('Creating data array',device.data.settings);
 									for(var i = 0; i < device.data.settings["Points X Req"];i++){
-										obj.bigdata.push({txt:device.device_tag,val:Math.random(),date: Date.now()});
+										obj.bigdata.push(processSelection(device));
 									}
 									end = +new Date();
-									//console.log('Data array created in Data length',obj.bigdata.length, 'In:',((end-start)/1000)+'s');
+									console.log('Data array created in Data length',obj.bigdata, 'In:',((end-start)/1000)+'s');
 									request({	
 										uri: device.data.settings.endpoint,
 										headers: {
@@ -797,10 +797,10 @@ dbModule.getActiveDevicesList('ASC', 10000, function(device_err,device_res){
 										//count ++;
 										//console.log(count)
 										if(error){
-											console.log(error);
+											//console.log(error);
 										}
 										else{
-											console.log(body);
+											//console.log(body);
 										}
 										dbModule.updateDeviceByTag(device.device_tag,{log:{last_sent:now}},function(err,res){
 											
@@ -824,6 +824,98 @@ dbModule.getActiveDevicesList('ASC', 10000, function(device_err,device_res){
 	
 });
 },1000);
+
+function processSelection(device){
+	var result = {};
+	Object.keys(device.polling_info).forEach(function(key){
+		if(device.polling_info[key] && device.polling_info[key].active){
+			switch (key){
+				case 'PV':
+					if(device.polling_info[key].dv_unit == 'Random Positive Integer'){
+						result = {txt:device.device_tag,val:Math.random(),date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Random Negative Integer'){
+						result = {txt:device.device_tag,val:Math.random()*-1,date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == '32Bit Int'){
+						result = {txt:device.device_tag,val:'32Bit Int',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == '64Bit Int'){
+						result = {txt:device.device_tag,val:'64Bit Int',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Base64 String'){
+						result = {txt:device.device_tag,val:new Buffer(Math.random()*50).toString('base64'),date: Date.now()};
+					}
+					break;
+				case 'AP':
+					if(device.polling_info[key].dv_unit == 'Small'){
+						result = {txt:device.device_tag,val:'path/to/small',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Medium'){
+						result = {txt:device.device_tag,val:'path/to/medium',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Large'){
+						result = {txt:device.device_tag,val:'path/to/large',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Extra-large'){
+						result = {txt:device.device_tag,val:'path/to/extralarge',date: Date.now()};
+					}
+					break;
+				case 'IR':
+					if(device.polling_info[key].dv_unit == 'Small'){
+						result = {txt:device.device_tag,val:'path/to/small',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Medium'){
+						result = {txt:device.device_tag,val:'path/to/medium',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Large'){
+						result = {txt:device.device_tag,val:'path/to/large',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Extra-large'){
+						result = {txt:device.device_tag,val:'path/to/extralarge',date: Date.now()};
+					}
+					break;
+				case 'SD':
+					if(device.polling_info[key].dv_unit == 'Random Positive Integer'){
+						result = {txt:device.device_tag,val:Math.random(),date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Random Negative Integer'){
+						result = {txt:device.device_tag,val:Math.random()*-1,date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == '32Bit Int'){
+						result = {txt:device.device_tag,val:'32Bit Int',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == '64Bit Int'){
+						result = {txt:device.device_tag,val:'64Bit Int',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Base64 String'){
+						result = {txt:device.device_tag,val:new Buffer(Math.random()*50).toString('base64'),date: Date.now()};
+					}
+					break;
+				case 'ED':
+					if(device.polling_info[key].dv_unit == 'Random Positive Integer'){
+						result = {txt:device.device_tag,val:Math.random(),date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Random Negative Integer'){
+						result = {txt:device.device_tag,val:Math.random()*-1,date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == '32Bit Int'){
+						result = {txt:device.device_tag,val:'32Bit Int',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == '64Bit Int'){
+						result = {txt:device.device_tag,val:'64Bit Int',date: Date.now()};
+					}
+					else if(device.polling_info[key].dv_unit == 'Base64 String'){
+						result = {txt:device.device_tag,val:new Buffer(Math.random()*50).toString('base64'),date: Date.now()};
+					}
+					break;
+			}
+			result.var = key;
+		}
+	});
+	return result;
+}
+
 
 function PollingDataRow(device,settings){
 	var algorithm = '';
