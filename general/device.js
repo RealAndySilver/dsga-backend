@@ -778,10 +778,9 @@ setInterval(function () {
 				if (settings_res.data && settings_res.data.active) {
 					current_settings = settings_res.data.data;
 					if (device_err) {
-						console.log('No active devices found');
+						//console.log('No active devices found');
 					}
 					else {
-						console.log('active devices found ', flag);
 						if (device_res.data && flag) {
 
 							now = +new Date();
