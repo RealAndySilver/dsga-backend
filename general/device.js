@@ -877,7 +877,7 @@ function processSelection(device) {
 						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
-						bin = fs.readFileSync(IMG_FILE);
+						bin = fs.readFileSync(EXTRALARGE_IMG);
 						ext = getExtention(EXTRALARGE_IMG);
 						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: new Date() };
 					}
