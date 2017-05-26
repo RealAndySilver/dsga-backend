@@ -27,8 +27,11 @@ var db;
 var arrayResponse = [];
 var dbModule = {};
 
-////
-var IMG_FILE = './public/hornet.png';
+//// images location
+var SMALL_IMG = './public/small.png';
+var MEDIUM_IMG = './public/medium.png';
+var LARGE_IMG = './public/large.jpg';
+var EXTRA_LARGE = './public/extralarge.png';
 var VIDEO_FILE = './public/video.MOV';
 
 //////////////////////////////////////////////////////
@@ -748,6 +751,7 @@ dbModule.toggleDevice = function (device_id, toggle_value, callback) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Timer poll
+var flag = true;
 setInterval(function () {
 	dbModule.getActiveDevicesList('ASC', 10000, function (device_err, device_res) {
 		var devices = [];
@@ -774,18 +778,22 @@ setInterval(function () {
 				if (settings_res.data && settings_res.data.active) {
 					current_settings = settings_res.data.data;
 					if (device_err) {
-						//console.log('No active devices found');
+						console.log('No active devices found');
 					}
 					else {
-						if (device_res.data) {
+						console.log('active devices found ', flag);
+						if (device_res.data && flag) {
+
 							now = +new Date();
 							devices = device_res.data;
 							devices.forEach(function (device) {
 								var current_device = {};
 								start = +new Date();
 								if (now - device.log.last_sent >= device.update_rate * 1000 || !device.log.last_sent) {
-									//console.log('Creating data array',device.data.settings);
+									//console.log('Creating data array',device.data.settings["Points X Req"]);
+									flag = false;
 									for (var i = 0; i < device.data.settings["Points X Req"]; i++) {
+
 										obj.bigdata.push(processSelection(device));
 									}
 									end = +new Date();
@@ -809,12 +817,9 @@ setInterval(function () {
 										dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
 
 											console.log('Finished device', device.device_tag);
+											flag = true;
 										});
 									});
-
-
-
-
 									//console.log('Total',i,'In:',((end-start)/1000)+'s');
 
 								}
@@ -829,91 +834,102 @@ setInterval(function () {
 	});
 }, 1000);
 
+var crypto = require('crypto');
+var format = require('biguint-format');
 function processSelection(device) {
+	//console.log("processSelection");
 	var result = {};
 	Object.keys(device.polling_info).forEach(function (key) {
 		if (device.polling_info[key] && device.polling_info[key].active) {
 			switch (key) {
 				case 'PV':
 					if (device.polling_info[key].dv_unit == 'Random Positive Integer') {
-						result = { txt: device.device_tag, val: Math.random(), date: Date.now() };
+						result = { txt: device.device_tag, val: Math.random(), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Random Negative Integer') {
-						result = { txt: device.device_tag, val: Math.random() * -1, date: Date.now() };
+						result = { txt: device.device_tag, val: Math.random() * -1, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '32Bit Int') {
-						result = { txt: device.device_tag, val: '32Bit Int', date: Date.now() };
+						result = { txt: device.device_tag, val: format(crypto.randomBytes(4)), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '64Bit Int') {
-						result = { txt: device.device_tag, val: '64Bit Int', date: Date.now() };
+						result = { txt: device.device_tag, val: format(crypto.randomBytes(8)), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Base64 String') {
-						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: Date.now() };
+						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
 					}
 					break;
 				case 'AP':
-					var bin = fs.readFileSync(IMG_FILE);
-					var ext = getExtention(IMG_FILE);
+					var bin;
+					var ext;
 					if (device.polling_info[key].dv_unit == 'Small') {
-						result = { txt: device.device_tag, file: { size: 'small', bin: bin, ext: ext }, date: Date.now() };
+						bin = fs.readFileSync(SMALL_IMG);
+						ext = getExtention(SMALL_IMG);
+						result = { txt: device.device_tag, file: { size: 'small', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Medium') {
-						result = { txt: device.device_tag, file: { size: 'medium', bin: bin, ext: ext }, date: Date.now() };
+						bin = fs.readFileSync(MEDIUM_IMG);
+						ext = getExtention(MEDIUM_IMG);
+						result = { txt: device.device_tag, file: { size: 'medium', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Large') {
-						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: Date.now() };
+						bin = fs.readFileSync(LARGE_IMG);
+						ext = getExtention(LARGE_IMG);
+						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
-						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: Date.now() };
+						bin = fs.readFileSync(IMG_FILE);
+						ext = getExtention(EXTRALARGE_IMG);
+						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: new Date() };
 					}
 					break;
 				case 'IR':
 					var bin = fs.readFileSync(VIDEO_FILE);
 					if (device.polling_info[key].dv_unit == 'Small') {
-						result = { txt: device.device_tag, file: { size: 'small', bin: bin, ext: ext }, date: Date.now() };
+						result = { txt: device.device_tag, file: { size: 'small', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Medium') {
-						result = { txt: device.device_tag, file: { size: 'medium', bin: bin, ext: ext }, date: Date.now() };
+						result = { txt: device.device_tag, file: { size: 'medium', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Large') {
-						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: Date.now() };
+						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
-						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: Date.now() };
+						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: new Date() };
 					}
 					break;
 				case 'SD':
 					if (device.polling_info[key].dv_unit == 'Random Positive Integer') {
-						result = { txt: device.device_tag, val: Math.random(), date: Date.now() };
+						result = { txt: device.device_tag, val: Math.random(), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Random Negative Integer') {
-						result = { txt: device.device_tag, val: Math.random() * -1, date: Date.now() };
+						result = { txt: device.device_tag, val: Math.random() * -1, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '32Bit Int') {
-						result = { txt: device.device_tag, val: '32Bit Int', date: Date.now() };
+						result = { txt: device.device_tag, val: '32Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '64Bit Int') {
-						result = { txt: device.device_tag, val: '64Bit Int', date: Date.now() };
+						result = { txt: device.device_tag, val: '64Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Base64 String') {
-						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: Date.now() };
+						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
 					}
 					break;
 				case 'ED':
 					if (device.polling_info[key].dv_unit == 'Random Positive Integer') {
-						result = { txt: device.device_tag, val: Math.random(), date: Date.now() };
+						result = { txt: device.device_tag, val: Math.random(), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Random Negative Integer') {
-						result = { txt: device.device_tag, val: Math.random() * -1, date: Date.now() };
+						result = { txt: device.device_tag, val: Math.random() * -1, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '32Bit Int') {
-						result = { txt: device.device_tag, val: '32Bit Int', date: Date.now() };
+						result = { txt: device.device_tag, val: '32Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '64Bit Int') {
-						result = { txt: device.device_tag, val: '64Bit Int', date: Date.now() };
+						result = { txt: device.device_tag, val: '64Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Base64 String') {
-						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: Date.now() };
+						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
 					}
 					break;
 			}
