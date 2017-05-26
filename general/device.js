@@ -31,7 +31,7 @@ var dbModule = {};
 var SMALL_IMG = './public/small.png';
 var MEDIUM_IMG = './public/medium.png';
 var LARGE_IMG = './public/large.jpg';
-var EXTRA_LARGE = './public/extralarge.png';
+var EXTRALARGE_IMG = './public/extralarge.png';
 var VIDEO_FILE = './public/video.MOV';
 
 //////////////////////////////////////////////////////
