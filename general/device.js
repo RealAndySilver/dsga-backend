@@ -15,6 +15,8 @@ var dblite = require("dblite");
 var dataHelper = require('./datahelper');
 var settings = require('./settings');
 var request = require("request");
+var FormData = require("form-data");
+
 //////////////////////////
 ///End of Dependencies ///
 //////////////////////////
@@ -797,30 +799,60 @@ setInterval(function () {
 									}
 									end = +new Date();
 									console.log('Data array created in Data length', obj.bigdata, 'In:', ((end - start) / 1000) + 's');
-									request({
-										uri: device.data.settings.endpoint,
-										headers: {
-											'content-type': 'application/json'
-										},
-										method: "POST",
-										json: obj
-									}, function (error, response, body) {
-										//count ++;
-										//console.log(count)
-										if (error) {
-											//console.log(error);
+									var options;
+									var formData = new FormData();
+									if (obj.bigdata[0].file) {
+										for (var i = 0; i < obj.bigdata.length; i++) {
+											var value = obj.bigdata[i];
+											var file = value.file
+											formData.append('tag', value.txt);
+											formData.append('date', value.date+"");
+											formData.append('var', value.var);
+											formData.append('file_size', value.file.size+"");
+											formData.append('upload_files', fs.createReadStream(file.path), + i+'_'+Date.now()+file.ext);
 										}
-										else {
-											//console.log(body);
-										}
-										dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
+										formData.submit(device.data.settings.endpoint, function (err, res) {
+											// res – response object (http.IncomingMessage)  //
+											if (err) {
+												//console.log(error);
+											}
+											else {
+												//console.log(body);
+											}
+											dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
 
-											console.log('Finished device', device.device_tag);
-											flag = true;
+												console.log('Finished device', device.device_tag);
+												flag = true;
+											});
+											console.log('Done');
 										});
-									});
-									//console.log('Total',i,'In:',((end-start)/1000)+'s');
 
+									} else {
+										options = {
+											uri: device.data.settings.endpoint,
+											headers: {
+												'content-type': 'application/json'
+											},
+											method: "POST",
+											json: obj
+										}
+										request(options, function (error, response, body) {
+											//count ++;
+											//console.log(count)
+											if (error) {
+												//console.log(error);
+											}
+											else {
+												//console.log(body);
+											}
+											dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
+
+												console.log('Finished device', device.device_tag);
+												flag = true;
+											});
+										});
+										//console.log('Total',i,'In:',((end-start)/1000)+'s');
+									}			
 								}
 
 							});
@@ -859,42 +891,37 @@ function processSelection(device) {
 					}
 					break;
 				case 'AP':
-					var bin;
 					var ext;
 					if (device.polling_info[key].dv_unit == 'Small') {
-						bin = fs.readFileSync(SMALL_IMG);
 						ext = getExtention(SMALL_IMG);
-						result = { txt: device.device_tag, file: { size: 'small', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'small', path: SMALL_IMG, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Medium') {
-						bin = fs.readFileSync(MEDIUM_IMG);
 						ext = getExtention(MEDIUM_IMG);
-						result = { txt: device.device_tag, file: { size: 'medium', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'medium', path: MEDIUM_IMG, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Large') {
-						bin = fs.readFileSync(LARGE_IMG);
 						ext = getExtention(LARGE_IMG);
-						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'large', path: LARGE_IMG, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
-						bin = fs.readFileSync(EXTRALARGE_IMG);
 						ext = getExtention(EXTRALARGE_IMG);
-						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'extralarge', path: EXTRALARGE_IMG, ext: ext }, date: new Date() };
 					}
 					break;
 				case 'IR':
-					var bin = fs.readFileSync(VIDEO_FILE);
+					var ext = getExtention(VIDEO_FILE);
 					if (device.polling_info[key].dv_unit == 'Small') {
-						result = { txt: device.device_tag, file: { size: 'small', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'small', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Medium') {
-						result = { txt: device.device_tag, file: { size: 'medium', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'medium', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Large') {
-						result = { txt: device.device_tag, file: { size: 'large', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'large', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
-						result = { txt: device.device_tag, file: { size: 'extralarge', bin: bin, ext: ext }, date: new Date() };
+						result = { txt: device.device_tag, file: { size: 'extralarge', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					break;
 				case 'SD':
