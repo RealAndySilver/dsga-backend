@@ -768,9 +768,13 @@ setInterval(function () {
 		var count = 0;
 		var obj = {
 			bigdata: [],
+			filedata: []
 		};
 		var start = null;
 		var end = null;
+		var processed_device = '';
+		var value = null;
+		var file = null;
 		settings.getGlobalSettingsByID(id, function (settings_err, settings_res) {
 			if (settings_err) {
 				console.log('Error loading settings. Can not send request to target server.');
@@ -794,17 +798,24 @@ setInterval(function () {
 									//console.log('Creating data array',device.data.settings["Points X Req"]);
 									flag = false;
 									for (var i = 0; i < device.data.settings["Points X Req"]; i++) {
-
-										obj.bigdata.push(processSelection(device));
+										processed_device = processSelection(device);
+										
+										if(processed_device.var == 'PV' || processed_device.var == 'ED' || processed_device.var == 'SD'){
+											obj.bigdata.push(processed_device);
+										}
+										else{
+											obj.filedata.push(processed_device);
+										}
 									}
 									end = +new Date();
-									console.log('Data array created in Data length', obj.bigdata, 'In:', ((end - start) / 1000) + 's');
+									
 									var options;
 									var formData = new FormData();
-									if (obj.bigdata[0].file) {
-										for (var i = 0; i < obj.bigdata.length; i++) {
-											var value = obj.bigdata[i];
-											var file = value.file
+									if (obj.filedata.length && obj.filedata[0].file) {
+										console.log('File array created in Data length', obj.filedata.length, 'In:', ((end - start) / 1000) + 's');
+										for (var i = 0; i < obj.filedata.length; i++) {
+											value = obj.filedata[i];
+											file = value.file;
 											formData.append('tag', value.txt);
 											formData.append('date', value.date+"");
 											formData.append('var', value.var);
@@ -821,13 +832,14 @@ setInterval(function () {
 											}
 											dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
 
-												console.log('Finished device', device.device_tag);
+												//console.log('Finished device', device.device_tag);
 												flag = true;
 											});
-											console.log('Done');
+											console.log('File uploaded');
 										});
 
 									} else {
+										console.log('Data array created in Data length', obj.bigdata.length, 'In:', ((end - start) / 1000) + 's');
 										options = {
 											uri: device.data.settings.endpoint,
 											headers: {
@@ -847,7 +859,7 @@ setInterval(function () {
 											}
 											dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
 
-												console.log('Finished device', device.device_tag);
+												//console.log('Finished device', device.device_tag);
 												flag = true;
 											});
 										});
