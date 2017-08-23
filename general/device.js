@@ -754,6 +754,10 @@ dbModule.toggleDevice = function (device_id, toggle_value, callback) {
 
 //Timer poll
 var flag = true;
+var contador = 0;
+setInterval(function(){
+	contador = 0;
+},60000)
 setInterval(function () {
 	dbModule.getActiveDevicesList('ASC', 10000, function (device_err, device_res) {
 		var devices = [];
@@ -801,6 +805,7 @@ setInterval(function () {
 										processed_device = processSelection(device);
 										
 										if(processed_device.var == 'PV' || processed_device.var == 'ED' || processed_device.var == 'SD'){
+											processed_device.tag = processed_device.tag+i;
 											obj.bigdata.push(processed_device);
 										}
 										else{
@@ -811,35 +816,36 @@ setInterval(function () {
 									
 									var options;
 									var formData = new FormData();
+									console.log('Ok here it is', processed_device.tag);
 									if (obj.filedata.length && obj.filedata[0].file) {
-										console.log('File array created in Data length', obj.filedata.length, 'In:', ((end - start) / 1000) + 's');
+										//console.log('File array created in Data length', obj.filedata.length, 'In:', ((end - start) / 1000) + 's');
+										console.log('Device', device.tag);
 										for (var i = 0; i < obj.filedata.length; i++) {
 											value = obj.filedata[i];
 											file = value.file;
-											formData.append('tag', value.txt);
+											formData.append('tag', value.tag+i);
 											formData.append('date', value.date+"");
 											formData.append('var', value.var);
 											formData.append('file_size', value.file.size+"");
 											formData.append('upload_files', fs.createReadStream(file.path), + i+'_'+Date.now()+file.ext);
 										}
-										formData.submit(device.data.settings.endpoint, function (err, res) {
-											// res – response object (http.IncomingMessage)  //
-											if (err) {
-												//console.log(error);
-											}
-											else {
-												//console.log(body);
-											}
-											dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
-
-												//console.log('Finished device', device.device_tag);
+										dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
+											formData.submit(device.data.settings.endpoint, function (err, res) {
+												// res – response object (http.IncomingMessage)  //
+												if (err) {
+													//console.log(error);
+												}
+												else {
+													//console.log(body);
+												}
 												flag = true;
-											});
-											console.log('File uploaded');
+												console.log('File uploaded');
+											});											
 										});
+										
 
 									} else {
-										console.log('Data array created in Data length', obj.bigdata.length, 'In:', ((end - start) / 1000) + 's');
+										//console.log('Data array created in Data length', obj.bigdata.length, 'In:', ((end - start) / 1000) + 's');
 										options = {
 											uri: device.data.settings.endpoint,
 											headers: {
@@ -851,17 +857,20 @@ setInterval(function () {
 										request(options, function (error, response, body) {
 											//count ++;
 											//console.log(count)
+											contador++;
+											//console.log(contador);
 											if (error) {
 												//console.log(error);
 											}
 											else {
 												//console.log(body);
 											}
-											dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
+										
+											//dbModule.updateDeviceByTag(device.device_tag, { log: { last_sent: now } }, function (err, res) {
 
-												//console.log('Finished device', device.device_tag);
+												//console.log('Req sent', obj.bigdata.length)
 												flag = true;
-											});
+											//});
 										});
 										//console.log('Total',i,'In:',((end-start)/1000)+'s');
 									}			
@@ -887,87 +896,87 @@ function processSelection(device) {
 			switch (key) {
 				case 'PV':
 					if (device.polling_info[key].dv_unit == 'Random Positive Integer') {
-						result = { txt: device.device_tag, val: Math.random(), date: new Date() };
+						result = { tag: device.device_tag, val: Math.random(), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Random Negative Integer') {
-						result = { txt: device.device_tag, val: Math.random() * -1, date: new Date() };
+						result = { tag: device.device_tag, val: Math.random() * -1, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '32Bit Int') {
-						result = { txt: device.device_tag, val: format(crypto.randomBytes(4)), date: new Date() };
+						result = { tag: device.device_tag, val: format(crypto.randomBytes(4)), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '64Bit Int') {
-						result = { txt: device.device_tag, val: format(crypto.randomBytes(8)), date: new Date() };
+						result = { tag: device.device_tag, val: format(crypto.randomBytes(8)), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Base64 String') {
-						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
+						result = { tag: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
 					}
 					break;
 				case 'AP':
 					var ext;
 					if (device.polling_info[key].dv_unit == 'Small') {
 						ext = getExtention(SMALL_IMG);
-						result = { txt: device.device_tag, file: { size: 'small', path: SMALL_IMG, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'small', path: SMALL_IMG, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Medium') {
 						ext = getExtention(MEDIUM_IMG);
-						result = { txt: device.device_tag, file: { size: 'medium', path: MEDIUM_IMG, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'medium', path: MEDIUM_IMG, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Large') {
 						ext = getExtention(LARGE_IMG);
-						result = { txt: device.device_tag, file: { size: 'large', path: LARGE_IMG, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'large', path: LARGE_IMG, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
 						ext = getExtention(EXTRALARGE_IMG);
-						result = { txt: device.device_tag, file: { size: 'extralarge', path: EXTRALARGE_IMG, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'extralarge', path: EXTRALARGE_IMG, ext: ext }, date: new Date() };
 					}
 					break;
 				case 'IR':
 					var ext = getExtention(VIDEO_FILE);
 					if (device.polling_info[key].dv_unit == 'Small') {
-						result = { txt: device.device_tag, file: { size: 'small', path: VIDEO_FILE, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'small', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Medium') {
-						result = { txt: device.device_tag, file: { size: 'medium', path: VIDEO_FILE, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'medium', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Large') {
-						result = { txt: device.device_tag, file: { size: 'large', path: VIDEO_FILE, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'large', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Extra-large') {
-						result = { txt: device.device_tag, file: { size: 'extralarge', path: VIDEO_FILE, ext: ext }, date: new Date() };
+						result = { tag: device.device_tag, file: { size: 'extralarge', path: VIDEO_FILE, ext: ext }, date: new Date() };
 					}
 					break;
 				case 'SD':
 					if (device.polling_info[key].dv_unit == 'Random Positive Integer') {
-						result = { txt: device.device_tag, val: Math.random(), date: new Date() };
+						result = { tag: device.device_tag, val: Math.random(), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Random Negative Integer') {
-						result = { txt: device.device_tag, val: Math.random() * -1, date: new Date() };
+						result = { tag: device.device_tag, val: Math.random() * -1, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '32Bit Int') {
-						result = { txt: device.device_tag, val: '32Bit Int', date: new Date() };
+						result = { tag: device.device_tag, val: '32Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '64Bit Int') {
-						result = { txt: device.device_tag, val: '64Bit Int', date: new Date() };
+						result = { tag: device.device_tag, val: '64Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Base64 String') {
-						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
+						result = { tag: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
 					}
 					break;
 				case 'ED':
 					if (device.polling_info[key].dv_unit == 'Random Positive Integer') {
-						result = { txt: device.device_tag, val: Math.random(), date: new Date() };
+						result = { tag: device.device_tag, val: Math.random(), date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Random Negative Integer') {
-						result = { txt: device.device_tag, val: Math.random() * -1, date: new Date() };
+						result = { tag: device.device_tag, val: Math.random() * -1, date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '32Bit Int') {
-						result = { txt: device.device_tag, val: '32Bit Int', date: new Date() };
+						result = { tag: device.device_tag, val: '32Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == '64Bit Int') {
-						result = { txt: device.device_tag, val: '64Bit Int', date: new Date() };
+						result = { tag: device.device_tag, val: '64Bit Int', date: new Date() };
 					}
 					else if (device.polling_info[key].dv_unit == 'Base64 String') {
-						result = { txt: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
+						result = { tag: device.device_tag, val: new Buffer(Math.random() * 50).toString('base64'), date: new Date() };
 					}
 					break;
 			}
